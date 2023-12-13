@@ -1,0 +1,26 @@
+src/libp2p*
+
+__pycache__
+
+.vscode/*
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+temp_file*
+
+
+venv
+.vscode/settings.json
+
+
+logs
+
+.env
+
+registry.db
+apps_list_temp.json
+apps_list.json
