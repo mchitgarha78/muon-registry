@@ -1,6 +1,6 @@
 
-from muon_frost_py.dkg import DKG
-from muon_frost_py.sa.sa import SA
+from muon_frost_py.dkg import Dkg
+from muon_frost_py.sa import SA
 from muon_frost_py.common.utils import Utils
 from node_evaluator import NodeEvaluator
 from registry_config import REGISTRY_INFO, PRIVATE
@@ -124,7 +124,9 @@ class RegistryProcess:
                 }
             }
             commitments_dict = await self.get_commitments(party)
-            result = await self.sa.request_signature(self.dkg_list[deployment_app_dkg_id], commitments_dict, data, party)
+            dkg_key = self.dkg_list[deployment_app_dkg_id].copy()
+            dkg_key['dkg_id'] = deployment_app_dkg_id
+            result = await self.sa.request_signature(dkg_key, commitments_dict, data, party)
             print(json.dumps(result, indent=4))
             if result['result'] == 'FAILED':
                 self.node_evaluator.evaluate_responses(result['signatures'])
@@ -162,7 +164,9 @@ class RegistryProcess:
                 }
             }
             commitments_dict = await self.get_commitments(party)
-            result = await self.sa.request_signature(self.dkg_list[deployment_app_dkg_id], commitments_dict, data, party)
+            dkg_key = self.dkg_list[deployment_app_dkg_id].copy()
+            dkg_key['dkg_id'] = deployment_app_dkg_id
+            result = await self.sa.request_signature(dkg_key, commitments_dict, data, party)
             print(json.dumps(result, indent=4))
             if result['result'] == 'FAILED':
                 self.node_evaluator.evaluate_responses(result['signatures'])
