@@ -1,8 +1,7 @@
 {
     "c0134d04-3261-455c-a2a2-bd72e810734d":
     {
-        "dkg_id": "c0134d04-3261-455c-a2a2-bd72e810734d",
-        "app_name": "deployment_app",
+        "app_name": "deployment",
         "threshold": 1,
         "party": [
             "16Uiu2HAkv3kvbv1LjsxQ62kXE8mmY16R97svaMFhZkrkXaXSBSTq"

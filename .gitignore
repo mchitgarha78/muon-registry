@@ -22,5 +22,5 @@ logs
 .env
 
 registry.db
-apps_list_temp.json
-apps_list.json
+apps_temp.json
+apps.json

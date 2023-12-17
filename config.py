@@ -1,6 +1,6 @@
 REGISTRY_INFO = {
-    "ip": "127.0.0.1",
-    "port": "8000",
+    'ip': '127.0.0.1',
+    'port': '8000',
     'public_key': '0802122103d3dd51508ee842967f963151e344463f04e9e8275cdbdaf2841eefe9802dfdf9'
 }
 REGISTRY_PEER_ID = '16Uiu2HAmSv27HvK2aHYHEhRU4fdH6FWTdhDnPWekKj2bQpHi4Lgp'
@@ -24,4 +24,4 @@ DKG_PENALTY_LIST = {
 
 REMOVE_THRESHOLD = -50
 
-REGISTRY_TOKEN = {}
+REGISTRY_URL = 'http://127.0.0.1:8050/v1'

@@ -1,4 +1,4 @@
-[submodule "muon_frost_py"]
-	path = muon_frost_py
-	url = https://github.com/SAYaghoubnejad/muon-frost-py.git
+[submodule "pyfrost_mpc"]
+	path = pyfrost_mpc
+	url = https://github.com/SAYaghoubnejad/pyfrost-mpc.git
 	branch = library
