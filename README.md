@@ -59,13 +59,13 @@ After running these commands, you should get the json of the app data. The json 
     }
 }
 ```
-This json object is for predefined parties. DKGs with party rotaion have one more item named `deployment_signature`. after getting this json, Your can add it manually to the `apps.json` file.
+This json object is for predefined parties. DKGs with party rotaion have one more item named `deployment_signature`. After getting this json, you can add it manually to the `apps.json` file.
 
 Keep in mind to run a file server API (e.g., Nginx) that will return the content of `apps.json`.
 
-And if you want to perform party rotation on expired DKGS and keep the `apps.json` updated, just add `rotation.sh` bash script to your cron-jobs with your arbitary configuration.
+And if you want to perform party rotation on expired DKGS and keep the `apps.json` updated, simply add the `rotation.sh` bash script to your cron jobs with your arbitrary configuration.
 
-Don't forget to add execute permission to it using the following command:
+Don't forget to add execute permission to the bash script using the following command:
 
 ```bash
 (venv) $ chmod +x rotation.sh
