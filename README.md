@@ -27,7 +27,7 @@ $ source venv/bin/activate
 
 ## How to Run
 
-Two methods are avaiable to run DKGs:
+Two methods are available to run DKGs:
 
 ```bash
 (venv) $ python dkg_cmd.py predefined-party --app-name [Your app name] --threshold [threshold of the DKG] --party [party of the DKG]
