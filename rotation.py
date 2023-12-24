@@ -1,5 +1,5 @@
 from registy import Registry
-from config import REGISTRY_URL
+from config import APPS_LIST_URL
 from datetime import datetime
 from typing import Dict
 import json
@@ -14,7 +14,7 @@ NUMBER_OF_RETRY = 10
 if __name__ == '__main__':
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     total_node_number = sys.argv[1]
-    registry = Registry(total_node_number, REGISTRY_URL)
+    registry = Registry(total_node_number, APPS_LIST_URL)
     with open('apps.json') as reader:
         apps_list = reader.read()
     apps_list: Dict = json.loads(apps_list)

@@ -2,9 +2,11 @@
 from pyfrost.network.dkg import Dkg
 from pyfrost.network.sa import SA
 from node_evaluator import NodeEvaluator
-from config import REGISTRY_INFO, PRIVATE
 from abstract.node_info import NodeInfo
 from typing import List, Dict
+from dotenv import load_dotenv
+from libp2p.crypto.secp256k1 import create_new_key_pair
+from libp2p.peer.id import ID as PeerID
 import uuid
 import random
 import json
@@ -12,38 +14,48 @@ import requests
 import time
 import trio
 import logging
+import os
 
 
 class Registry:
-    def __init__(self, total_node_number: int, registry_url: str) -> None:
+    def __init__(self, registry_url: str) -> None:
+        load_dotenv()
         self.node_info = NodeInfo()
-        self.dkg = Dkg(REGISTRY_INFO, PRIVATE, self.node_info,
+        secret = bytes.fromhex(os.getenv('PRIVATE_KEY'))
+        key_pair = create_new_key_pair(secret)
+        peer_id: PeerID = PeerID.from_pubkey(key_pair.public_key)
+        print(
+            f'Public Key: {key_pair.public_key.serialize().hex()}, PeerId: {peer_id.to_base58()}')
+        address = {
+            'public_key': key_pair.public_key.serialize().hex(),
+            'ip': '0.0.0.0',
+            'port': str(os.getenv('PORT'))
+        }
+
+        self.dkg = Dkg(address, os.getenv('PRIVATE_KEY'), self.node_info,
                        max_workers=0, default_timeout=50)
 
-        self.sa = SA(REGISTRY_INFO, PRIVATE, self.node_info, max_workers=0, default_timeout=50,
+        self.sa = SA(address, os.getenv('PRIVATE_KEY'), self.node_info, max_workers=0, default_timeout=50,
                      host=self.dkg.host)
-
-        self.total_node_number = total_node_number
         self.registry_url = registry_url
         self.__nonces: Dict[str, list[Dict]] = {}
         self.node_evaluator = NodeEvaluator()
         self.dkg_list: Dict = {}
 
     async def get_nonces(self, min_number_of_nonces: int = 10, sleep_time: int = 2):
-        peer_ids = self.node_info.get_all_nodes(self.total_node_number)
+        peer_ids = self.node_info.get_all_nodes()
 
         # TODO: Random selection
         selected_nodes = {}
         for node_id, peer_ids in peer_ids.items():
             selected_nodes[node_id] = peer_ids[0]
-        
+
         nonces_response = await self.sa.request_nonces(selected_nodes, min_number_of_nonces)
         self.node_evaluator.evaluate_responses(nonces_response)
         for node_id, peer_id in selected_nodes.items():
             self.__nonces.setdefault(node_id, [])
             if nonces_response[peer_id]['status'] == 'SUCCESSFUL':
                 self.__nonces[node_id] += nonces_response[peer_id]['nonces']
-
 
     async def update_dkg_list(self) -> None:
         try:
@@ -60,7 +72,8 @@ class Registry:
             await self.get_nonces()
             await self.update_dkg_list()
             if args.operation == 'predefined-party':
-                await self.predefined_party_dkg(args.app_name, args.threshold, json.loads(args.party))
+                party = str(args.party).split(',')
+                await self.predefined_party_dkg(args.app_name, args.threshold, party)
             elif args.operation == 'random-party':
                 await self.random_party_dkg(args.app_name, args.threshold, args.party_number)
             self.dkg.stop()
@@ -108,13 +121,13 @@ class Registry:
                 'dkg_response': None
             }
         seed = [i['hash'] for i in result['signatures'].values()][0]
-        all_nodes = self.node_info.get_all_nodes(self.total_node_number)
+        all_nodes = self.node_info.get_all_nodes()
         new_party = Registry.get_new_random_subset(
             all_nodes, int(seed, 16), n)
         # TODO: Random selection
         selected_nodes = {}
         for node_id, peer_ids in all_nodes.items():
-            selected_nodes[node_id] = peer_ids[0]   
+            selected_nodes[node_id] = peer_ids[0]
         new_party = self.node_evaluator.get_new_party(selected_nodes, n)
         is_completed = False
         dkg_response = None
@@ -161,10 +174,11 @@ class Registry:
                 'sign': result,
                 'dkg_response': None
             }
-        deployment_signature = [i['signature_data']['signature'] for i in result['signatures'].values()][0]
+        deployment_signature = [i['signature_data']['signature']
+                                for i in result['signatures'].values()][0]
         res = {
             'status': 'SUCCESSFUL',
-            
+
             dkg_response['dkg_id']: {
                 'app_name': app_name,
                 'threshold': threshold,
@@ -181,9 +195,8 @@ class Registry:
 
     async def predefined_party_dkg(self, app_name: str, threshold: int, party: List):
         # TODO: add log for unsuccessfull DKGs.
-        is_completed = False
         dkg_response = None
-        all_nodes = self.node_info.get_all_nodes(self.total_node_number)
+        all_nodes = self.node_info.get_all_nodes()
 
         # TODO: Selected nodes should be random.
         selected_nodes = {}
@@ -192,27 +205,26 @@ class Registry:
         dict_party = {}
         for node_id in party:
             dict_party[str(node_id)] = selected_nodes[str(node_id)]
-        while not is_completed:
-            dkg_response = await self.dkg.request_dkg(threshold, dict_party, None)
-            if dkg_response['dkg_id'] == None:
-                return {
-                    'status': 'FAILED',
-                    'sign': result,
-                    'dkg_response': None
+
+        dkg_response = await self.dkg.request_dkg(threshold, dict_party, None)
+        if dkg_response['dkg_id'] == None:
+            return {
+                'status': 'FAILED',
+                'sign': result,
+                'dkg_response': None
+            }
+        result = dkg_response['result']
+        if result == 'SUCCESSFUL':
+            res = {
+                dkg_response['dkg_id']: {
+                    'app_name': app_name,
+                    'threshold': threshold,
+                    'party': dkg_response['party'],
+                    'is_predefined': True,
+                    'timestamp': int(time.time())
                 }
-            result = dkg_response['result']
-            if result == 'SUCCESSFUL':
-                is_completed = True
-                res = {
-                    dkg_response['dkg_id']: {
-                        'app_name': app_name,
-                        'threshold': threshold,
-                        'party': dkg_response['party'],
-                        'is_predefined': True,
-                        'timestamp': int(time.time())
-                    }
-                }
-                print(json.dumps(res, indent=4))
-                return res
-            else:
-                self.node_evaluator.evaluate_dkg_response(dkg_response)
+            }
+            print(json.dumps(res, indent=4))
+            return res
+        else:
+            self.node_evaluator.evaluate_dkg_response(dkg_response)

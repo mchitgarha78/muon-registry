@@ -30,14 +30,14 @@ $ source venv/bin/activate
 Two methods are available to run DKGs:
 
 ```bash
-(venv) $ python dkg_cmd.py predefined-party --app-name [Your app name] --threshold [threshold of the DKG] --party [party of the DKG] --total-node-number [total number of nodes used in DKG]
-(venv) $ python dkg_cmd.py random-party --app-name [Your app name] --threshold [threshold of the DKG] --party-number [Number of nodeIds to choose] --total-node-number [total number of nodes used in DKG]
+(venv) $ python dkg_cmd.py predefined-party --app-name [Your app name] --threshold [threshold of the DKG] --party [party of the DKG]
+(venv) $ python dkg_cmd.py random-party --app-name [Your app name] --threshold [threshold of the DKG] --party-number [Number of nodeIds to choose]
 ```
 
 For example, if you want to run DKG upon deployment app, you run this command:
 
 ```bash
-(venv) $ python dkg_cmd.py predefined-party --app-name deployment --threshold 2 --party "['1','2','3']" --total-node-number 3
+(venv) $ python dkg_cmd.py predefined-party --app-name deployment --threshold 2 --party 1,2,3 
 ```
 After running these commands, you should get the json of the app data. The json format must be like this:
 ```json
