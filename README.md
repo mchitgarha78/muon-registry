@@ -20,7 +20,7 @@ $ git clone https://github.com/mchitgarha78/muon-registry.git --recurse-submodul
 $ cd muon-registry
 $ virtualenv -p python3.10 venv
 $ source venv/bin/activate
-(venv) $ pip install pyfrost_mpc/
+(venv) $ pip install -r requirements.txt
 ```
 
 **Note:** The required Python version is `3.10`.
