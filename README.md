@@ -49,9 +49,6 @@ After running these commands, you should get the json of the app data. The json 
             "1": "16Uiu2HAkv3kvbv1LjsxQ62kXE8mmY16R97svaMFhZkrkXaXSBSTq"
         },
         "public_key": 296768544575062889523639571945738322985742122100051520084729374865199995195726,
-        "public_shares": {
-            "1": 296768544575062889523639571945738322985742122100051520084729374865199995195726
-        },
         "is_predefined": true,
         "timestamp": 1703318284
     }

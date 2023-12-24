@@ -3,8 +3,7 @@ from pyfrost.network.dkg import Dkg
 from pyfrost.network.sa import SA
 from node_evaluator import NodeEvaluator
 from config import REGISTRY_INFO, PRIVATE
-from common.node_info import NodeInfo
-from common.data_manager import DataManager
+from abstract.node_info import NodeInfo
 from typing import List, Dict
 import uuid
 import random
@@ -23,7 +22,6 @@ class Registry:
 
         self.sa = SA(REGISTRY_INFO, PRIVATE, self.node_info, max_workers=0, default_timeout=50,
                      host=self.dkg.host)
-        self.data_manager = DataManager()
 
         self.total_node_number = total_node_number
         self.registry_url = registry_url
@@ -31,14 +29,21 @@ class Registry:
         self.node_evaluator = NodeEvaluator()
         self.dkg_list: Dict = {}
 
-    async def maintain_nonces(self, min_number_of_nonces: int = 10):
-        all_nodes = self.node_info.get_all_nodes(self.total_node_number)
+    async def get_nonces(self, min_number_of_nonces: int = 10, sleep_time: int = 2):
+        peer_ids = self.node_info.get_all_nodes(self.total_node_number)
+
+        # TODO: Random selection
         selected_nodes = {}
-        for node_id, peer_ids in all_nodes.items():
+        for node_id, peer_ids in peer_ids.items():
             selected_nodes[node_id] = peer_ids[0]
-        nonces = await self.sa.request_nonces(selected_nodes, min_number_of_nonces)
-        #self.node_evaluator.evaluate_responses(nonces)
-        self.__nonces = nonces
+        
+        nonces_response = await self.sa.request_nonces(selected_nodes, min_number_of_nonces)
+        self.node_evaluator.evaluate_responses(nonces_response)
+        for node_id, peer_id in selected_nodes.items():
+            self.__nonces.setdefault(node_id, [])
+            if nonces_response[peer_id]['status'] == 'SUCCESSFUL':
+                self.__nonces[node_id] += nonces_response[peer_id]['nonces']
+
 
     async def update_dkg_list(self) -> None:
         try:
@@ -49,33 +54,10 @@ class Registry:
             logging.error(
                 f'Registry => Exception occurred: {type(e).__name__}: {e}')
 
-    async def get_nonces(self, party: List[str], timeout: int = 5) -> Dict:
-        commitments_dict = {}
-        peer_ids_with_timeout = {}
-        for peer_id in party:
-            with trio.move_on_after(timeout) as cancel_scope:
-                while not self.__nonces.get(peer_id):
-                    await trio.sleep(0.1)
-
-                commitment = self.__nonces[peer_id].pop()
-                commitments_dict[peer_id] = commitment
-
-            if cancel_scope.cancelled_caught:
-                timeout_response = {
-                    'status': 'TIMEOUT',
-                    'error': 'Communication timed out',
-                }
-                peer_ids_with_timeout[peer_id] = timeout_response
-        if len(peer_ids_with_timeout) > 0:
-            self.node_evaluator.evaluate_responses(peer_ids_with_timeout)
-            logging.warning(
-                f'get_commitments => Timeout error occurred. peer ids with timeout: {peer_ids_with_timeout}')
-        return commitments_dict
-
     async def run(self, args) -> None:
         async with trio.open_nursery() as nursery:
             nursery.start_soon(self.dkg.run)
-            await self.maintain_nonces()
+            await self.get_nonces()
             await self.update_dkg_list()
             if args.operation == 'predefined-party':
                 await self.predefined_party_dkg(args.app_name, args.threshold, json.loads(args.party))
@@ -113,9 +95,11 @@ class Registry:
 
         deployment_dkg_key = self.dkg_list[deployment_dkg_id].copy()
         deployment_dkg_key['dkg_id'] = deployment_dkg_id
-        commitments_dict = await self.get_nonces(deployment_dkg_key['party'])
 
-        result = await self.sa.request_signature(deployment_dkg_key, commitments_dict, data, deployment_dkg_key['party'])
+        nonces_dict = {}
+        for node_id in deployment_dkg_key['party'].keys():
+            nonces_dict[node_id] = self.__nonces[node_id].pop()
+        result = await self.sa.request_signature(deployment_dkg_key, nonces_dict, data, deployment_dkg_key['party'])
         if result['result'] == 'FAILED':
             self.node_evaluator.evaluate_responses(result['signatures'])
             return {
@@ -123,14 +107,18 @@ class Registry:
                 'sign': result,
                 'dkg_response': None
             }
+        seed = [i['hash'] for i in result['signatures'].values()][0]
         all_nodes = self.node_info.get_all_nodes(self.total_node_number)
         new_party = Registry.get_new_random_subset(
-            all_nodes, int(result['message']['signature'], 16), n)
-        new_party = self.node_evaluator.get_new_party(new_party, n)
+            all_nodes, int(seed, 16), n)
+        # TODO: Random selection
+        selected_nodes = {}
+        for node_id, peer_ids in all_nodes.items():
+            selected_nodes[node_id] = peer_ids[0]   
+        new_party = self.node_evaluator.get_new_party(selected_nodes, n)
         is_completed = False
         dkg_response = None
         while not is_completed:
-            # TODO: remove app_name from request_dkg
             dkg_response = await self.dkg.request_dkg(threshold, new_party, None)
             if dkg_response['dkg_id'] == None:
                 return {
@@ -152,7 +140,7 @@ class Registry:
                 'params': {
                     'app_name': app_name,
                     'timestamp': timestamp,
-                    'seed': int(result['message']['signature'], 16),
+                    'seed': seed,
                     'n': n,
                     'dkg_data': dkg_response,
                     'party': new_party,
@@ -161,9 +149,10 @@ class Registry:
 
             }
         }
-
-        commitments_dict = await self.get_nonces(deployment_dkg_key['party'])
-        result = await self.sa.request_signature(deployment_dkg_key, commitments_dict, data, deployment_dkg_key['party'])
+        nonces_dict = {}
+        for node_id in deployment_dkg_key['party'].keys():
+            nonces_dict[node_id] = self.__nonces[node_id].pop()
+        result = await self.sa.request_signature(deployment_dkg_key, nonces_dict, data, deployment_dkg_key['party'])
         if result['result'] == 'FAILED':
             self.node_evaluator.evaluate_responses(result['signatures'])
             print(json.dumps(result, indent=4))
@@ -172,18 +161,18 @@ class Registry:
                 'sign': result,
                 'dkg_response': None
             }
-
+        deployment_signature = [i['signature_data']['signature'] for i in result['signatures'].values()][0]
         res = {
             'status': 'SUCCESSFUL',
+            
             dkg_response['dkg_id']: {
                 'app_name': app_name,
                 'threshold': threshold,
                 'party': dkg_response['party'],
                 'n': n,
                 'public_key': dkg_response['public_key'],
-                'public_shares': dkg_response['public_shares'],
                 'is_predefined': False,
-                'deployment_signature': result['signatures'],
+                'deployment_signature': deployment_signature,
                 'timestamp': int(time.time())
             }
         }
@@ -191,6 +180,7 @@ class Registry:
         return res
 
     async def predefined_party_dkg(self, app_name: str, threshold: int, party: List):
+        # TODO: add log for unsuccessfull DKGs.
         is_completed = False
         dkg_response = None
         all_nodes = self.node_info.get_all_nodes(self.total_node_number)
@@ -218,8 +208,6 @@ class Registry:
                         'app_name': app_name,
                         'threshold': threshold,
                         'party': dkg_response['party'],
-                        'public_key': dkg_response['public_key'],
-                        'public_shares': dkg_response['public_shares'],
                         'is_predefined': True,
                         'timestamp': int(time.time())
                     }
