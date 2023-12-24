@@ -28,7 +28,7 @@ class Registry:
             f'Public Key: {key_pair.public_key.serialize().hex()}, PeerId: {peer_id.to_base58()}')
         address = {
             'public_key': key_pair.public_key.serialize().hex(),
-            'ip': '0.0.0.0',
+            'ip': str(os.getenv('HOST')),
             'port': str(os.getenv('PORT'))
         }
 
