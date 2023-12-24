@@ -25,3 +25,4 @@ registry.db
 apps_temp.json
 apps.json
 api.py
+nodes.json
