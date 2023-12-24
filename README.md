@@ -56,7 +56,7 @@ After running these commands, you should get the json of the app data. The json 
 ```
 This json object is for predefined parties. DKGs with party rotaion have one more item named `deployment_signature`. After getting this json, you can add it manually to the `apps.json` file.
 
-Keep in mind to run a file server API (e.g., Nginx) that will return the content of `apps.json`.
+Keep in mind to run a file server API (e.g., Nginx) that will return the content of `apps.json` and address it when running Muon Nodes and Muon SAs.
 
 And if you want to perform party rotation on expired DKGs and keep the `apps.json` updated, simply add the `rotation.sh` bash script to your cron jobs with your arbitrary configuration.
 
