@@ -185,6 +185,7 @@ class Registry:
                 'party': dkg_response['party'],
                 'n': n,
                 'public_key': dkg_response['public_key'],
+                'public_shares': dkg_response['public_shares'],
                 'is_predefined': False,
                 'deployment_signature': deployment_signature,
                 'timestamp': int(time.time())
@@ -220,6 +221,8 @@ class Registry:
                     'app_name': app_name,
                     'threshold': threshold,
                     'party': dkg_response['party'],
+                    'public_key': dkg_response['public_key'],
+                    'public_shares': dkg_response['public_shares'],
                     'is_predefined': True,
                     'timestamp': int(time.time())
                 }
