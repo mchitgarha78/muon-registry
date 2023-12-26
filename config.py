@@ -1,0 +1,16 @@
+PENALTY_LIST = {
+    'SUCCESSFUL': 0,
+    'ERROR': -2,
+    'TIMEOUT': -100,
+    'COMPLAINT': -100,
+    'MALICIOUS': -100
+}
+DKG_PENALTY_LIST = {
+    'SUCCESSFUL': 0,
+    'ERROR': -2,
+    'TIMEOUT': -10,
+    'COMPLAINT': -50,
+    'MALICIOUS': -50
+}
+
+REMOVE_THRESHOLD = -50
