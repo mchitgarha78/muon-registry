@@ -1,6 +1,5 @@
 from dotenv import load_dotenv
 from registy import Registry
-from config import APPS_LIST_URL
 import argparse
 import trio
 import os

@@ -1,7 +1,7 @@
 from registy import Registry
-from config import APPS_LIST_URL
 from datetime import datetime
 from typing import Dict
+from dotenv import load_dotenv
 import json
 import sys
 import trio
@@ -12,9 +12,10 @@ PERIOD_IN_SECONDS = 24 * 60 * 60
 NUMBER_OF_RETRY = 10
 
 if __name__ == '__main__':
+    load_dotenv()
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     total_node_number = sys.argv[1]
-    registry = Registry(total_node_number, APPS_LIST_URL)
+    registry = Registry(os.getenv('APPS_LIST_URL'), os.getenv('PRIVATE_KEY'), os.getenv('HOST'), os.getenv('PORT'))
     with open('apps.json') as reader:
         apps_list = reader.read()
     apps_list: Dict = json.loads(apps_list)
