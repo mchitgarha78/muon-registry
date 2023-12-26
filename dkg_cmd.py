@@ -1,10 +1,12 @@
+from dotenv import load_dotenv
 from registy import Registry
 from config import APPS_LIST_URL
 import argparse
 import trio
-
+import os
 
 def main():
+    load_dotenv()
     parser = argparse.ArgumentParser(description='Registry Command-line.')
     
     subparsers = parser.add_subparsers(title='Commands', dest='operation', help='Choose an option')
@@ -21,7 +23,7 @@ def main():
     predefined_party.add_argument('--party', '-p', type=str, help='Party list of the nodes\' peerIds.')
     predefined_party.set_defaults(func= trio.run)
     args = parser.parse_args()
-    registry = Registry(APPS_LIST_URL)
+    registry = Registry(os.getenv('APPS_LIST_URL'), os.getenv('PRIVATE_KEY'), os.getenv('HOST'), os.getenv('PORT'))
     args.func(registry.run, args)
 
 if __name__ == '__main__':

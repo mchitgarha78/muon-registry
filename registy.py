@@ -4,7 +4,6 @@ from pyfrost.network.sa import SA
 from node_evaluator import NodeEvaluator
 from abstract.node_info import NodeInfo
 from typing import List, Dict
-from dotenv import load_dotenv
 from libp2p.crypto.secp256k1 import create_new_key_pair
 from libp2p.peer.id import ID as PeerID
 import uuid
@@ -14,28 +13,26 @@ import requests
 import time
 import trio
 import logging
-import os
 
 
 class Registry:
-    def __init__(self, registry_url: str) -> None:
-        load_dotenv()
+    def __init__(self, registry_url: str, private_key: str, host: str, port: str) -> None:
         self.node_info = NodeInfo()
-        secret = bytes.fromhex(os.getenv('PRIVATE_KEY'))
+        secret = bytes.fromhex(private_key)
         key_pair = create_new_key_pair(secret)
         peer_id: PeerID = PeerID.from_pubkey(key_pair.public_key)
         print(
             f'Public Key: {key_pair.public_key.serialize().hex()}, PeerId: {peer_id.to_base58()}')
         address = {
             'public_key': key_pair.public_key.serialize().hex(),
-            'ip': str(os.getenv('HOST')),
-            'port': str(os.getenv('PORT'))
+            'ip': str(host),
+            'port': str(port)
         }
 
-        self.dkg = Dkg(address, os.getenv('PRIVATE_KEY'), self.node_info,
+        self.dkg = Dkg(address, private_key, self.node_info,
                        max_workers=0, default_timeout=50)
 
-        self.sa = SA(address, os.getenv('PRIVATE_KEY'), self.node_info, max_workers=0, default_timeout=50,
+        self.sa = SA(address, private_key, self.node_info, max_workers=0, default_timeout=50,
                      host=self.dkg.host)
         self.registry_url = registry_url
         self.__nonces: Dict[str, list[Dict]] = {}

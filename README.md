@@ -25,6 +25,19 @@ $ source venv/bin/activate
 
 **Note:** The required Python version is `3.10`.
 
+After these installations, configure `.env` file. The file `.env.example` has the example of thie environment variables. So you can type the following command:
+```bash
+(venv) $ cp .env.example .env
+```
+
+Change your settings in the `.env` file:
+```
+PRIVATE_KEY=<your-registry-private>
+PORT=5038
+HOST=0.0.0.0
+APPS_LIST_URL=<your-apps-url>
+```
+
 ## How to Run
 
 Two methods are available to run DKGs:
@@ -49,6 +62,9 @@ After running these commands, you should get the json of the app data. The json 
             "1": "16Uiu2HAkv3kvbv1LjsxQ62kXE8mmY16R97svaMFhZkrkXaXSBSTq"
         },
         "public_key": 296768544575062889523639571945738322985742122100051520084729374865199995195726,
+        "public_shares": {
+            "1": 296768544575062889523639571945738322985742122100051520084729374865199995195726
+        },
         "is_predefined": true,
         "timestamp": 1703318284
     }
