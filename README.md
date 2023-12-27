@@ -1,6 +1,7 @@
 # Muon Registry
 
-This implementation represents Muon-Registry version of [pyfrost](https://github.com/SAYaghoubnejad/pyfrost) library to run DKGs via command-line and schedule a python script as a cron-job to renew DKG operation on expired DKGs for rotating their parties and updating the `apps.json` data.
+This implementation represents Muon-Registry version of [pyfrost](https://github.com/SAYaghoubnejad/pyfrost) library to run DKGs via command-line and schedule a python script as a cron-job to renew DKG operation on expired DKGs for rotating their parties and updating the `apps.json` data. Muon-Registry along the [Muon-Node](https://github.com/mchitgarha78/muon-node), the [Muon-SA](https://github.com/mchitgarha78/muon-sa), and Muon-Apps runner ([python apps runner](https://github.com/mchitgarha78/muon-py-apps) and [js apps runner](https://github.com/mchitgarha78/muon-js-apps/tree/main)) represent the core of the Muon network to deploy and run apps and issue a distributed signature. For more insight on the Muon network, please read our [document](https://github.com/mchitgarha78/muon-node/wiki) describing the main functionalities of the muon system.
+
 
 
 Muon Registry has the functionality of running DKGs for two types of node party:
